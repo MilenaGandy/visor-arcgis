@@ -1,0 +1,84 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Search with a geocoding control</title>
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <!-- Load Esri Leaflet from CDN -->
+    <script src="https://unpkg.com/esri-leaflet@3.0.16/dist/esri-leaflet.js"></script>
+    <!-- Load Esri Leaflet Geocoder from CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/esri-leaflet-geocoder@3.1.4/dist/esri-leaflet-geocoder.css" crossorigin="" />
+    <script src="https://unpkg.com/esri-leaflet-geocoder@3.1.4/dist/esri-leaflet-geocoder.js" crossorigin=""></script>
+    <!-- Load Esri Leaflet Vector from CDN -->
+    <script src="https://unpkg.com/esri-leaflet-vector@4.3.0/dist/esri-leaflet-vector.js" crossorigin=""></script>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="coordenadas">Pasa el mouse sobre el mapa</div>
+    <script>
+      // Tu API Key
+      const apiKey = "AAPTxy8BH1VEsoebNVZXo8HurEWyT35IA-S2u9ocvCqsi1v22t0iTKvabrvhYb0bIfv-OPfKxbJ2OaF_jiN1JR9lliZ7dg4u2aS8hAPpWwzb7LwbvjyqMYZHE7nZY7iKEhsOFwWPU6cxZsFufzdTP3YNzfHMk1aLlGvPK9MshIFUwz7GBDuLUvSbfEuylu_f_llMMVCt8-e35Cm0ZoOadaZvcvl05XnrqLh49fo1pOxULhY.AT1_97zfIWDM";
+    
+      // Inicialización del mapa
+      const map = L.map("map");
+    
+      // Capa base del mapa
+      L.esri.Vector.vectorBasemapLayer("arcgis/navigation", {
+        apikey: apiKey
+      }).addTo(map);
+    
+      // Control de búsqueda
+      const searchControl = L.esri.Geocoding.geosearch({
+        position: "topright",
+        placeholder: "Busca una dirección o lugar",
+        useMapBounds: false,
+        providers: [
+          L.esri.Geocoding.arcgisOnlineProvider({
+            apikey: apiKey
+          })
+        ]
+      }).addTo(map);
+    
+      // Capa para los resultados de la búsqueda
+      const results = L.layerGroup().addTo(map);
+      searchControl.on("results", function (data) {
+        results.clearLayers();
+        for (let i = data.results.length - 1; i >= 0; i--) {
+          results.addLayer(L.marker(data.results[i].latlng));
+        }
+      });
+    
+      // --- CÓDIGO PARA AÑADIR UN PUNTO POR DIRECCIÓN ---
+      const direccionACargar = "Carrera 7 # 113-43, Bogotá, Colombia";
+      const geocodeService = L.esri.Geocoding.geocode({ apikey: apiKey });
+      geocodeService.text(direccionACargar).run(function (error, result) {
+        if (error) {
+          console.error(error);
+          map.setView([4.60971, -74.08175], 12);
+          return;
+        }
+        if (result.results && result.results.length > 0) {
+          const latlng = result.results[0].latlng;
+          L.marker(latlng).addTo(map).bindPopup(`<b>${result.results[0].text}</b>`).openPopup();
+          map.setView(latlng, 17);
+        } else {
+          alert("La dirección especificada no pudo ser encontrada.");
+          map.setView([4.60971, -74.08175], 12);
+        }
+      });
+    
+      // --- CÓDIGO PARA MOSTRAR COORDENADAS ---
+      const infoCoordenadas = document.getElementById('coordenadas');
+      map.on('mousemove', function(e) {
+        const lat = e.latlng.lat.toFixed(5);
+        const lng = e.latlng.lng.toFixed(5);
+        infoCoordenadas.innerHTML = `Latitud: ${lat} | Longitud: ${lng}`;
+      });
+      map.on('mouseout', function() {
+        infoCoordenadas.innerHTML = 'Pasa el mouse sobre el mapa';
+      });
+    </script>
+  </body>
+</html>
