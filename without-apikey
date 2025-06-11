@@ -1,0 +1,139 @@
+<template>
+  <div>
+    <h2>Sistema de Información Geográfico</h2>
+    <div id="map" ref="mapContainer"></div>
+  </div>
+</template>
+
+<script lang="ts" setup>
+import { onMounted, ref } from 'vue';
+
+const mapContainer = ref<HTMLDivElement | null>(null);
+
+const ubicaciones = [
+  { nombre: "Alpes", lat: 4.54476, lng: -74.06282 },
+  { nombre: "Alpes II", lat: 4.49884, lng: -74.12061 },
+  { nombre: "Bosque de Medina", lat: 4.73715, lng: -74.02008 },
+  { nombre: "Bosque de Pinos", lat: 4.75704, lng: -74.02381 },
+  { nombre: "Casablanca", lat: 4.47161, lng: -74.13788 },  
+  { nombre: "Cerro Norte I", lat: 4.76722, lng: -74.01956 },
+  { nombre: "Chicó", lat: 4.73574, lng: -74.02706 },
+  { nombre: "Codito I", lat: 4.79255, lng: -74.02758 },
+  { nombre: "Columnas", lat: 4.58025, lng: -74.04169 },
+  { nombre: "Cazucá Antiguos y Nuevos", lat: 4.49392, lng: -74.14856 },
+  { nombre: "Egipto", lat: 4.59477, lng: -74.06173 },
+  { nombre: "El Consuelo", lat: 4.47702, lng: -74.09503 },
+  { nombre: "El Dorado II (PTAP)", lat: 4.51659, lng: -74.07548 },
+  { nombre: "El Paso", lat: 4.60940, lng: -74.03260 },
+  { nombre: "El Silencio", lat: 4.52055, lng: -74.08412 },
+  { nombre: "El Uval", lat: 4.48911, lng: -74.09062 },
+  { nombre: "Jalisco", lat: 4.49910, lng: -74.13788 },
+  { nombre: "Juan Rey", lat: 4.50974, lng: -74.07722 },
+  { nombre: "Subestación La Capilla", lat: 4.54476, lng: -74.06282 },
+  { nombre: "Tanque La Fiscala", lat: 4.49884, lng: -74.09885 },
+  { nombre: "La Laguna", lat: 4.51604, lng: -74.07844 },
+  { nombre: "Soratama I", lat: 4.77093, lng: -74.02325 },
+  { nombre: "Pardo Rubio II", lat: 4.63155, lng: -74.05367 },
+  { nombre: "Parque Nacional", lat: 4.62000, lng: -74.06000 },
+  { nombre: "San Vicente", lat: 4.50974, lng: -74.07722 },
+  { nombre: "San Dionisio", lat: 4.47702, lng: -74.09503 },
+  { nombre: "San Isidro", lat: 4.54476, lng: -74.06282 },
+  { nombre: "Piedra Herrada", lat: 4.60940, lng: -74.03260 },
+  { nombre: "Monteblanco", lat: 4.51604, lng: -74.07844 },
+  { nombre: "Uval (Tanque)", lat: 4.48911, lng: -74.09062 },
+  { nombre: "PTAP Wiesner", lat: 4.61908, lng: -73.97495 },
+  { nombre: "PTAP Yomasa", lat: 4.50190, lng: -74.06450 },
+  { nombre: "PTAP Vitelma", lat: 4.58284, lng: -74.04870 },
+  { nombre: "PTAP Tibitoc", lat: 5.03450, lng: -74.02000 },
+  { nombre: "PAU Suba", lat: 4.74312, lng: -74.09249 },
+  { nombre: "PAU Servitá", lat: 4.77093, lng: -74.03577 },
+  { nombre: "PAU Toberín", lat: 4.75704, lng: -74.03749 },
+  { nombre: "PAU CAD", lat: 4.63690, lng: -74.08570 },
+  { nombre: "PAU Engativá", lat: 4.70014, lng: -74.11300 },
+  { nombre: "PAU Centro Nariño", lat: 4.62916, lng: -74.09339 },
+  { nombre: "PAU 20 de Julio", lat: 4.55180, lng: -74.07500 },
+  { nombre: "PAU Manitas", lat: 4.51730, lng: -74.12000 },
+  { nombre: "PAU Santa Lucía", lat: 4.52000, lng: -74.10000 },
+  { nombre: "PAU Candelaria", lat: 4.51000, lng: -74.08000 },
+  { nombre: "PAU Bosa", lat: 4.60000, lng: -74.18000 },
+  { nombre: "PAU Américas", lat: 4.62000, lng: -74.14000 },
+  { nombre: "PAU San Diego", lat: 4.61050, lng: -74.06800 },
+  { nombre: "PAU San Benito", lat: 4.47545, lng: -74.15000 },
+  { nombre: "PAU Unisur (Soacha)", lat: 4.58000, lng: -74.20000 },
+  { nombre: "PAU Soacha Parque", lat: 4.58000, lng: -74.20000 },
+  { nombre: "Castillo", lat: 4.47895, lng: -74.13845 },
+];
+
+const ubicacion2 = [ 
+  { nombre: "PAU Niza", lat: 4.70776, lng: -74.05739 },
+]
+
+onMounted(async () => {
+  // @ts-ignore
+  if (!window.L) {
+    await loadLeaflet();
+  }
+
+  // @ts-ignore
+  const L = window.L;
+  const myIcon = L.divIcon({
+    html: ('<i class="fas fa-map-marker-alt fa-2x" style="color:#90C503;"></i>'),
+    iconSize: [30, 42], // Tamaño aproximado, ajusta según el icono
+    className: 'my-div-icon' // Opcional: clase personalizada para estilos adicionales
+  });
+  const myIcon2 = L.divIcon({
+    html: ('<i class="fas fa-map-marker-alt fa-2x" style="color:#0197DB;"></i>'),
+    iconSize: [30, 42], 
+    className: 'my-div-icon'
+  });
+  if (mapContainer.value && L) {
+    const map = L.map(mapContainer.value).setView([4.65, -74.10], 11);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    ubicaciones.forEach(loc => {
+      L.marker([loc.lat, loc.lng])
+        .setIcon(myIcon)
+        .addTo(map)
+        .bindPopup(`<strong>${loc.nombre}</strong><br>Lat: ${loc.lat}, Lng: ${loc.lng}`);
+    });
+    ubicacion2.forEach(loc => {
+      L.marker([loc.lat, loc.lng])
+        .setIcon(myIcon2)
+        .addTo(map)
+        .bindPopup(`<strong>${loc.nombre}</strong><br>Lat: ${loc.lat}, Lng: ${loc.lng}`);
+    });
+  }
+});
+
+// Helper para cargar Leaflet de la CDN si no está disponible
+function loadLeaflet(): Promise<void> {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    script.onload = () => {
+      // Agrega el CSS también si no está
+      if (!document.getElementById('leaflet-css')) {
+        const link = document.createElement('link');
+        link.id = 'leaflet-css';
+        link.rel = 'stylesheet';
+        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        document.head.appendChild(link);
+      }
+      resolve();
+    };
+    document.body.appendChild(script);
+  });
+}
+</script>
+
+<style scoped>
+#map {
+  height: 600px;
+  width: 100%;
+  border-radius: 8px;
+  margin-top: 1em;
+}
+</style>
